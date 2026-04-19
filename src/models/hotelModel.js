@@ -1,50 +1,17 @@
-const fs   = require('fs');
-const path = require('path');
+const mongoose = require('mongoose');
 
-// Fichier JSON qui stocke les hôtels
-const DATA_FILE = path.join(__dirname, '../../hotels.json');
+// On définit le "Schéma" : c'est le plan de construction d'un hôtel
+const hotelSchema = new mongoose.Schema({
+  nom:     { type: String, required: true }, // Le nom est obligatoire
+  adresse: { type: String, required: true },
+  email:   { type: String, required: true },
+  tel:     { type: String, required: true },
+  prix:    { type: Number, required: true }, // Type Nombre pour le prix
+  devise:  { type: String, default: 'F XOF' },
+  image:   { type: String } // Pour stocker l'URL de l'image plus tard
+}, { 
+  timestamps: true // Crée automatiquement 'createdAt' (date de création)
+});
 
-// Crée le fichier s'il n'existe pas
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-}
-
-// ── Lire tous les hôtels ──────────────────────────────────
-function getAll() {
-  const data = fs.readFileSync(DATA_FILE, 'utf-8');
-  return JSON.parse(data);
-}
-
-// ── Sauvegarder les hôtels ────────────────────────────────
-function save(hotels) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(hotels, null, 2));
-}
-
-// ── Ajouter un hôtel ──────────────────────────────────────
-function add(hotelData) {
-  const hotels = getAll();
-
-  const nouvelHotel = {
-    id:      hotels.length + 1,
-    nom:     hotelData.nom,
-    adresse: hotelData.adresse,
-    email:   hotelData.email,
-    tel:     hotelData.tel,
-    prix:    hotelData.prix,
-    devise:  hotelData.devise || 'F XOF'
-  };
-
-  hotels.push(nouvelHotel);
-  save(hotels);
-
-  return nouvelHotel;
-}
-
-// ── Supprimer un hôtel ────────────────────────────────────
-function deleteById(id) {
-  let hotels = getAll();
-  hotels     = hotels.filter(h => h.id !== id);
-  save(hotels);
-}
-
-module.exports = { getAll, add, delete: deleteById };
+// On exporte le modèle pour l'utiliser dans le contrôleur
+module.exports = mongoose.model('Hotel', hotelSchema);

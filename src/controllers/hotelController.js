@@ -1,40 +1,41 @@
 const Hotel = require('../models/hotelModel');
 
-// ── GET — Récupérer tous les hôtels ──────────────────────
-exports.getHotels = (req, res) => {
+// ── 1. RÉCUPÉRER TOUS LES HÔTELS ─────────────────────────────
+exports.getHotels = async (req, res) => {
   try {
-    const hotels = Hotel.getAll();
+    const hotels = await Hotel.find().sort({ createdAt: -1 });
     res.json(hotels);
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-// ── POST — Ajouter un hôtel ───────────────────────────────
-exports.addHotel = (req, res) => {
+// ── 2. AJOUTER UN NOUVEL HÔTEL (AVEC IMAGE CLOUDINARY) ────────
+exports.addHotel = async (req, res) => {
   try {
-    const { nom, adresse, email, tel, prix, devise } = req.body;
+    const hotelData = req.body;
 
-    // Validation
-    if (!nom || !adresse || !email || !tel || !prix) {
-      return res.status(400).json({ message: 'Tous les champs sont obligatoires' });
+    // Si Multer a bien envoyé l'image sur Cloudinary, 
+    // l'URL se trouve dans req.file.path
+    if (req.file) {
+      hotelData.image = req.file.path; 
     }
 
-    const nouvelHotel = Hotel.add({ nom, adresse, email, tel, prix, devise });
-    res.status(201).json(nouvelHotel);
+    const nouvelHotel = new Hotel(hotelData);
+    await nouvelHotel.save();
 
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(201).json(nouvelHotel);
+  } catch (error) {
+    res.status(400).json({ message: "Erreur lors de l'ajout", error: error.message });
   }
 };
 
-// ── DELETE — Supprimer un hôtel ───────────────────────────
-exports.deleteHotel = (req, res) => {
+// ── 3. SUPPRIMER UN HÔTEL ────────────────────────────────────
+exports.deleteHotel = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    Hotel.delete(id);
-    res.json({ message: 'Hôtel supprimé avec succès' });
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur' });
+    await Hotel.findByIdAndDelete(req.params.id);
+    res.json({ message: "Hôtel supprimé avec succès" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

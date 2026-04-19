@@ -1,26 +1,34 @@
-const express     = require('express');
-const cors        = require('cors');
-const path        = require('path');
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const cors = require('cors'); // 1. On importe CORS
+const connectDB = require('./src/config/db');
 const hotelRoutes = require('./src/routes/hotelRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 
-const app  = express();
-const PORT = process.env.PORT || 3000;
+const app = express();
 
-// Middlewares
-app.use(cors());
+// --- CONNEXION BASE DE DONNÉES ---
+connectDB();
+
+// --- MIDDLEWARES ---
+app.use(cors()); // 2. On autorise les connexions (INDISPENSABLE)
 app.use(express.json());
 
-// ✅ Chemin correct vers ton dossier frontend
-app.use(express.static(path.join(__dirname, '..', '1projet_volkano', '1projet_vilkano')));
-// Route par défaut → ouvre index.html du frontend
+// Servir les fichiers statiques (ton frontend)
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// --- ROUTES API ---
+app.use('/api/hotels', hotelRoutes);
+app.use('/api/auth', authRoutes);
+
+// Route par défaut
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '1projet_volkano', '1projet_vilkano', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// Routes API
-app.use('/api/hotels', hotelRoutes);
-
-// Démarrer le serveur
+// --- LANCEMENT ---
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
 });
